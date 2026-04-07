@@ -1,0 +1,7 @@
+# Credenciais — NUNCA commitar
+.env
+*.env.local
+
+# Sistema
+.DS_Store
+Thumbs.db
