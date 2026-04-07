@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>27ª Assembleia Distrital – Matola | Dashboard de Avaliação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --blue: #2E6FAD;
+    --blue-light: #79b8ff;
+    --gold: #C9A227;
+    --green: #3fb950;
+    --green-dim: rgba(63,185,80,0.15);
+    --red: #f85149;
+    --red-dim: rgba(248,81,73,0.15);
+    --amber: #d29922;
+    --amber-dim: rgba(210,153,34,0.15);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 32px; height: 32px; background: linear-gradient(135deg, #1A3A6B 0%, #C9A227 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .header-title { font-size: 14px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--muted); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  #sync-status { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  #sync-btn { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity .15s; display: flex; align-items: center; gap: 6px; }
+  #sync-btn:hover { opacity: .85; }
+  #sync-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .spin { display: inline-block; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .filters-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 2rem; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  select { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 10px; font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; outline: none; transition: border-color .15s; }
+  select:hover, select:focus { border-color: var(--blue); }
+  #reset-filters { background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  #reset-filters:hover { color: var(--text); }
+  #filter-count { font-size: 12px; color: var(--gold); font-weight: 500; margin-left: auto; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+
+  #loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
+  .loader { width: 40px; height: 40px; border: 3px solid var(--border2); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; }
+  .load-text { color: var(--muted); font-size: 13px; }
+  #error-box { display: none; background: var(--red-dim); border: 1px solid var(--red); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 13px; color: var(--red); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; position: relative; overflow: hidden; transition: border-color .2s; }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; border-radius: 10px 0 0 10px; }
+  .kpi-card.blue::before  { background: var(--blue); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.gold::before  { background: var(--gold); }
+  .kpi-card.red::before   { background: var(--red); }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .kpi-value { font-size: 32px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .kpi-card.blue  .kpi-value { color: var(--blue-light); }
+  .kpi-card.green .kpi-value { color: var(--green); }
+  .kpi-card.gold  .kpi-value { color: var(--gold); }
+  .kpi-card.red   .kpi-value { color: var(--red); }
+  .kpi-sub { font-size: 11px; color: var(--muted); }
+
+  .section { margin-bottom: 2rem; }
+  .section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .section-title span { font-size: 14px; }
+
+  .indicator-list { display: flex; flex-direction: column; gap: 6px; }
+  .ind-row { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 180px 60px 90px; align-items: center; gap: 12px; transition: border-color .15s; }
+  .ind-row:hover { border-color: var(--border2); }
+  .ind-name { font-size: 13px; font-weight: 500; }
+  .ind-bar-wrap { background: rgba(255,255,255,0.07); border-radius: 4px; height: 6px; overflow: hidden; }
+  .ind-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+  .ind-score { font-size: 13px; font-weight: 600; text-align: center; font-family: 'DM Mono', monospace; }
+  .badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; text-align: center; text-transform: uppercase; letter-spacing: .04em; }
+  .badge-ex { background: var(--green-dim); color: var(--green); }
+  .badge-bo { background: rgba(46,111,173,0.2); color: var(--blue-light); }
+  .badge-sa { background: var(--amber-dim); color: var(--amber); }
+  .badge-ma { background: var(--red-dim); color: var(--red); }
+
+  .dist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .dist-table th { text-align: left; padding: 8px 12px; background: var(--surface2); color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); }
+  .dist-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .dist-table tr:last-child td { border-bottom: none; }
+  .dist-table tr:hover td { background: var(--surface2); }
+  .dist-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .dp5 { background: var(--green-dim); color: var(--green); }
+  .dp4 { background: rgba(46,111,173,0.2); color: var(--blue-light); }
+  .dp3 { background: var(--amber-dim); color: var(--amber); }
+  .dp2 { background: rgba(248,81,73,0.12); color: #ff9492; }
+  .dp1 { background: var(--red-dim); color: var(--red); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .profile-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+  .profile-box:last-child { margin-bottom: 0; }
+  .profile-box-title { padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .profile-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-name { flex: 1; font-size: 12px; }
+  .profile-bar-wrap { width: 80px; background: rgba(255,255,255,0.07); border-radius: 3px; height: 5px; }
+  .profile-bar { height: 100%; border-radius: 3px; }
+  .profile-count { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; width: 60px; text-align: right; }
+
+  .opinion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .opinion-card { border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 8px; }
+  .opinion-card.yes { background: var(--green-dim); border: 1px solid rgba(63,185,80,0.3); }
+  .opinion-card.no  { background: var(--red-dim);   border: 1px solid rgba(248,81,73,0.3); }
+  .opinion-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .opinion-card.yes .opinion-label { color: var(--green); }
+  .opinion-card.no  .opinion-label { color: var(--red); }
+  .opinion-value { font-size: 28px; font-weight: 600; }
+  .opinion-card.yes .opinion-value { color: var(--green); }
+  .opinion-card.no  .opinion-value { color: var(--red); }
+  .opinion-sub { font-size: 11px; color: var(--muted); }
+
+  .comments-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .comments-grid { grid-template-columns: 1fr; } }
+  .comments-col-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .comment-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; transition: border-color .15s; }
+  .comment-card:hover { border-color: var(--border2); }
+  .comment-text { font-size: 13px; line-height: 1.6; margin-bottom: 6px; }
+  .comment-meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; }
+  .ctag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 10px; }
+  .no-data { color: var(--muted); font-size: 13px; font-style: italic; padding: 1rem 0; }
+
+  footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 2rem; }
+
+  @media (max-width: 600px) {
+    header { padding: 0 1rem; }
+    .filters-bar { padding: 10px 1rem; }
+    main { padding: 1rem; }
+    .header-sub { display: none; }
+    .ind-row { grid-template-columns: 1fr 60px 90px; }
+    .ind-bar-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">📊</div>
+    <div>
+      <div class="header-title">27ª Assembleia Distrital – Matola</div>
+      <div class="header-sub">Dashboard de Avaliação</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="sync-status">—</span>
+    <button id="sync-btn" onclick="loadData()">
+      <span id="sync-icon">↻</span> Actualizar
+    </button>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <span class="filter-label">Filtrar por</span>
+  <select id="f-perfil" onchange="applyFilters()">
+    <option value="">Todos os perfis</option>
+    <option value="delegado">Delegado</option>
+    <option value="convidado">Convidado</option>
+    <option value="staff">Staff / Secretariado</option>
+    <option value="observador">Observador</option>
+  </select>
+  <select id="f-genero" onchange="applyFilters()">
+    <option value="">Todos os géneros</option>
+    <option value="m">Masculino</option>
+    <option value="f">Feminino</option>
+  </select>
+  <select id="f-igreja" onchange="applyFilters()">
+    <option value="">Todas as igrejas</option>
+  </select>
+  <button id="reset-filters" onclick="resetFilters()">✕ Limpar filtros</button>
+  <span id="filter-count"></span>
+</div>
+
+<main>
+  <div id="error-box"></div>
+  <div id="loading">
+    <div class="loader"></div>
+    <div class="load-text">A carregar dados…</div>
+  </div>
+  <div id="dashboard" style="display:none"></div>
+</main>
+
+<footer>
+  27ª Assembleia Distrital da Matola · FGCI – Frente de Gestão de Crescimento Integral · <span id="footer-year"></span>
+</footer>
+
+<script>
+// ── Calls /api/kobo — Vercel serverless proxy (avoids CORS) ──────────────────
+const INDICATORS = [
+  { key: 'aval_credenciamento', label: 'Processo de Credenciamento'        },
+  { key: 'aval_local',          label: 'Condições do Local (Conforto/Som)' },
+  { key: 'aval_alimentacao',    label: 'Qualidade da Alimentação'          },
+  { key: 'aval_pontualidade',   label: 'Cumprimento do Horário'            },
+  { key: 'aval_temas',          label: 'Relevância dos Temas'              },
+  { key: 'aval_metodologia',    label: 'Metodologia Adotada'               },
+];
+const PERFIS  = { delegado:'Delegado', convidado:'Convidado', staff:'Staff/Secretariado', observador:'Observador' };
+const GENEROS = { m:'Masculino', f:'Feminino' };
+
+let allData = [], filtered = [];
+
+document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+async function loadData() {
+  const btn  = document.getElementById('sync-btn');
+  const icon = document.getElementById('sync-icon');
+  btn.disabled = true;
+  icon.className = 'spin';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('sync-status').textContent = 'A carregar…';
+
+  try {
+    // ── Calls local Vercel function — no CORS issue ──────────────────────
+    const resp = await fetch('/api/kobo');
+    if (!resp.ok) throw new Error(`Proxy ${resp.status}: ${resp.statusText}`);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+
+    allData = json.results || [];
+    populateIgrejaFilter();
+    applyFilters();
+    const now = new Date().toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('sync-status').textContent = `${allData.length} respostas · ${now}`;
+  } catch (e) {
+    const box = document.getElementById('error-box');
+    box.style.display = 'block';
+    box.textContent = `Erro ao carregar dados: ${e.message}`;
+    document.getElementById('sync-status').textContent = 'Erro';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    icon.className = '';
+  }
+}
+
+function populateIgrejaFilter() {
+  const sel = document.getElementById('f-igreja');
+  // Remove old options (keep first)
+  while (sel.options.length > 1) sel.remove(1);
+  const churches = [...new Set(allData.map(r => (r.proveniencia||'').trim()).filter(Boolean))].sort();
+  churches.forEach(ch => {
+    const o = document.createElement('option');
+    o.value = ch; o.textContent = ch;
+    sel.appendChild(o);
+  });
+}
+
+function applyFilters() {
+  const perfil = document.getElementById('f-perfil').value;
+  const genero = document.getElementById('f-genero').value;
+  const igreja = document.getElementById('f-igreja').value;
+  filtered = allData.filter(r =>
+    (!perfil || r.perfil_participante === perfil) &&
+    (!genero || r.genero === genero) &&
+    (!igreja || r.proveniencia === igreja)
+  );
+  const active = [perfil,genero,igreja].filter(Boolean).length;
+  document.getElementById('filter-count').textContent =
+    active > 0 ? `${filtered.length} de ${allData.length} respostas` : '';
+  renderDashboard(filtered);
+}
+
+function resetFilters() {
+  ['f-perfil','f-genero','f-igreja'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function pct(n, total) { return total > 0 ? Math.round(n/total*100) : 0; }
+
+function renderDashboard(data) {
+  document.getElementById('loading').style.display = 'none';
+  const dash = document.getElementById('dashboard');
+  dash.style.display = 'block';
+  const n = data.length;
+
+  // KPIs
+  let s = 0, c = 0;
+  INDICATORS.forEach(ind => data.forEach(r => {
+    const v = parseFloat(r[ind.key]);
+    if (v>=1 && v<=5) { s+=v; c++; }
+  }));
+  const globalAvg = c > 0 ? s/c : 0;
+  const simCount  = data.filter(r => r.espaco_opiniao==='sim').length;
+  const simPct    = pct(simCount, n);
+
+  let bestLabel='—', bestScore=0;
+  INDICATORS.forEach(ind => {
+    const vals = data.map(r=>parseFloat(r[ind.key])).filter(v=>v>=1&&v<=5);
+    const a = avg(vals);
+    if (a > bestScore) { bestScore=a; bestLabel=ind.label; }
+  });
+
+  // Indicator rows
+  const indRows = INDICATORS.map(ind => {
+    const vals = data.map(r=>parseFloat(r[ind.key])).filter(v=>v>=1&&v<=5);
+    const a    = avg(vals);
+    const w    = a>0 ? (a/5*100).toFixed(1) : 0;
+    const col  = a>=4?'#3fb950':a>=3?'#2E6FAD':a>=2?'#d29922':'#f85149';
+    const bcls = a>=4.5?'badge-ex':a>=3.5?'badge-bo':a>=2.5?'badge-sa':'badge-ma';
+    const blbl = a>=4.5?'Excelente':a>=3.5?'Bom':a>=2.5?'Satisfatório':a>0?'Mau':'—';
+    return `<div class="ind-row">
+      <div class="ind-name">${ind.label}</div>
+      <div class="ind-bar-wrap"><div class="ind-bar" style="width:${w}%;background:${col}"></div></div>
+      <div class="ind-score" style="color:${col}">${a>0?a.toFixed(2):'—'}</div>
+      <div class="badge ${bcls}">${blbl}</div>
+    </div>`;
+  }).join('');
+
+  // Distribution table
+  const distRows = INDICATORS.map(ind => {
+    const dist={5:0,4:0,3:0,2:0,1:0};
+    data.forEach(r=>{const v=parseInt(r[ind.key]);if(dist[v]!==undefined)dist[v]++;});
+    const tot=Object.values(dist).reduce((a,b)=>a+b,0);
+    const cells=[5,4,3,2,1].map(k=>{
+      const p=tot>0?Math.round(dist[k]/tot*100):0;
+      return `<td><span class="dist-pill dp${k}">${dist[k]} <span style="opacity:.6">${p}%</span></span></td>`;
+    }).join('');
+    return `<tr><td style="font-size:12px;font-weight:500">${ind.label}</td>${cells}<td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${tot}</td></tr>`;
+  }).join('');
+
+  // Profile
+  const mkPerfil = (entries, color='var(--blue)') => entries.map(([k,v])=>{
+    const cnt=data.filter(r=>r.perfil_participante===k).length;
+    const p=pct(cnt,n);
+    return `<div class="profile-row"><div class="profile-name">${v}</div>
+      <div class="profile-bar-wrap"><div class="profile-bar" style="width:${p}%;background:${color}"></div></div>
+      <div class="profile-count">${cnt} (${p}%)</div></div>`;
+  }).join('');
+
+  const mkGenero = Object.entries(GENEROS).map(([k,v])=>{
+    const cnt=data.filter(r=>r.genero===k).length;
+    const p=pct(cnt,n);
+    return `<div class="profile-row"><div class="profile-name">${v}</div>
+      <div class="profile-bar-wrap"><div class="profile-bar" style="width:${p}%;background:var(--gold)"></div></div>
+      <div class="profile-count">${cnt} (${p}%)</div></div>`;
+  }).join('');
+
+  const churchMap={};
+  data.forEach(r=>{const ch=(r.proveniencia||'').trim()||'(não indicado)';churchMap[ch]=(churchMap[ch]||0)+1;});
+  const mkChurch=Object.entries(churchMap).sort((a,b)=>b[1]-a[1]).map(([ch,cnt])=>{
+    const p=pct(cnt,n);
+    return `<div class="profile-row"><div class="profile-name">${ch}</div>
+      <div class="profile-bar-wrap"><div class="profile-bar" style="width:${p}%;background:var(--blue-light)"></div></div>
+      <div class="profile-count">${cnt} (${p}%)</div></div>`;
+  }).join('');
+
+  // Opinion by profile
+  const opRows=Object.entries(PERFIS).map(([k,v])=>{
+    const sub=data.filter(r=>r.perfil_participante===k);
+    const s=sub.filter(r=>r.espaco_opiniao==='sim').length;
+    const p=sub.length>0?Math.round(s/sub.length*100):0;
+    return `<tr>
+      <td style="font-size:12px">${v}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center">${sub.length}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green);text-align:center">${s}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--red);text-align:center">${sub.length-s}</td>
+      <td style="font-weight:600;font-size:12px;text-align:center;color:${p>=50?'var(--green)':'var(--red)'}">${p}%</td>
+    </tr>`;
+  }).join('');
+
+  // Comments
+  const mkCard=(text,r)=>`<div class="comment-card">
+    <div class="comment-text">${text}</div>
+    <div class="comment-meta">
+      <span class="ctag">${PERFIS[r.perfil_participante]||'—'}</span>
+      <span class="ctag">${GENEROS[r.genero]||'—'}</span>
+      ${r.proveniencia?`<span class="ctag">${r.proveniencia}</span>`:''}
+    </div></div>`;
+
+  const withF=data.filter(r=>(r.pontos_fortes||'').trim());
+  const withM=data.filter(r=>(r.pontos_melhorar||'').trim());
+
+  dash.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card blue"><div class="kpi-label">Total de Respostas</div><div class="kpi-value">${n}</div><div class="kpi-sub">formulários submetidos</div></div>
+      <div class="kpi-card green"><div class="kpi-label">Média Global</div><div class="kpi-value">${globalAvg>0?globalAvg.toFixed(2):'—'}</div><div class="kpi-sub">em 6 indicadores</div></div>
+      <div class="kpi-card gold"><div class="kpi-label">Espaço de Opinião</div><div class="kpi-value">${simPct}%</div><div class="kpi-sub">${simCount} responderam Sim</div></div>
+      <div class="kpi-card red"><div class="kpi-label">Melhor Indicador</div><div class="kpi-value">${bestScore>0?bestScore.toFixed(2):'—'}</div><div class="kpi-sub">${bestLabel}</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>📋</span> Avaliação por Indicador (média 1–5)</div>
+      <div class="indicator-list">${indRows}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>📊</span> Distribuição de Respostas</div>
+      <div style="overflow-x:auto">
+        <table class="dist-table">
+          <thead><tr><th>Indicador</th><th>5 – Excelente</th><th>4 – Bom</th><th>3 – Satisfatório</th><th>2 – Mau</th><th>1 – Muito Mau</th><th>Total</th></tr></thead>
+          <tbody>${distRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="section-title"><span>👥</span> Perfil dos Participantes</div>
+        <div class="profile-box"><div class="profile-box-title">Por Perfil</div>${mkPerfil(Object.entries(PERFIS))}</div>
+        <div class="profile-box"><div class="profile-box-title">Por Género</div>${mkGenero}</div>
+      </div>
+      <div>
+        <div class="section-title"><span>⛪</span> Por Igreja / Proveniência</div>
+        <div class="profile-box">${mkChurch||'<div class="profile-row"><div class="profile-name no-data">Sem dados</div></div>'}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>🗣️</span> Espaço de Opinião</div>
+      <div class="opinion-grid">
+        <div class="opinion-card yes"><div class="opinion-label">Sim</div><div class="opinion-value">${simCount}</div><div class="opinion-sub">${simPct}% dos participantes</div></div>
+        <div class="opinion-card no"><div class="opinion-label">Não</div><div class="opinion-value">${n-simCount}</div><div class="opinion-sub">${100-simPct}% dos participantes</div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dist-table">
+          <thead><tr><th>Perfil</th><th style="text-align:center">Total</th><th style="text-align:center">Sim</th><th style="text-align:center">Não</th><th style="text-align:center">% Sim</th></tr></thead>
+          <tbody>${opRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>💬</span> Comentários Abertos</div>
+      <div class="comments-grid">
+        <div>
+          <div class="comments-col-title">✅ O que correu melhor (${withF.length})</div>
+          ${withF.length?withF.map(r=>mkCard(r.pontos_fortes,r)).join(''):'<div class="no-data">Sem comentários.</div>'}
+        </div>
+        <div>
+          <div class="comments-col-title">🔧 O que deve ser melhorado (${withM.length})</div>
+          ${withM.length?withM.map(r=>mkCard(r.pontos_melhorar,r)).join(''):'<div class="no-data">Sem comentários.</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+loadData();
+</script>
+</body>
+</html>
